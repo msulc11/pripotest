@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRIPO Quiz - Podle kategorií</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PRIPO - Test znalostí</h1>
+            <p>Vyberte kategorii, kterou chcete otestovat.</p>
+        </header>
+
+        <main>
+            <div class="categories-container">
+                <!-- Kategorie budou dynamicky generovány JavaScriptem -->
+            </div>
+            
+            <div class="navigation">
+                <a href="index.html" class="nav-btn">Zpět na hlavní stránku</a>
+            </div>
+        </main>
+    </div>
+
+    <script src="questions.js"></script>
+    <script>
+        class CategorySelector {
+            constructor() {
+                this.questions = questions;
+                this.categories = this.getCategories();
+                this.initializeElements();
+                this.displayCategories();
+            }
+
+            getCategories() {
+                const categories = {};
+                this.questions.forEach(question => {
+                    if (!categories[question.category]) {
+                        categories[question.category] = 0;
+                    }
+                    categories[question.category]++;
+                });
+                return categories;
+            }
+
+            initializeElements() {
+                this.categoriesContainer = document.querySelector('.categories-container');
+            }
+
+            displayCategories() {
+                Object.entries(this.categories).forEach(([category, count]) => {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'category-option';
+                    categoryDiv.innerHTML = `
+                        <h3>${category}</h3>
+                        <p>Počet otázek: ${count}</p>
+                        <button class="start-category-btn" data-category="${category}">Začít test</button>
+                    `;
+                    this.categoriesContainer.appendChild(categoryDiv);
+                });
+
+                // Bind events
+                this.categoriesContainer.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('start-category-btn')) {
+                        const category = e.target.dataset.category;
+                        this.startCategoryQuiz(category);
+                    }
+                });
+            }
+
+            startCategoryQuiz(category) {
+                // Uložit vybranou kategorii do localStorage
+                localStorage.setItem('selectedCategory', category);
+                // Přesměrovat na celý test (upravený pro kategorii)
+                window.location.href = 'celytest.html';
+            }
+        }
+
+        // Inicializace
+        document.addEventListener('DOMContentLoaded', () => {
+            new CategorySelector();
+        });
+    </script>
+
+    <style>
+        /* Přidání stylů pro kategorie (přidejte do style.css nebo sem pro rychlost) */
+        .categories-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .category-option {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .category-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .category-option h3 {
+            color: #2c3e50;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .category-option p {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .start-category-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .start-category-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .category-option {
+                padding: 20px;
+            }
+
+            .category-option h3 {
+                font-size: 1.3em;
+            }
+
+            .start-category-btn {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</body>
+</html>
