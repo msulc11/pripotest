@@ -1,6 +1,17 @@
 class QuizApp {
     constructor() {
-        this.questions = questions;
+        // Zkontroluj, zda je vybrána kategorie
+        const selectedCategory = localStorage.getItem('selectedCategory');
+        if (selectedCategory) {
+            this.questions = questions.filter(q => q.category === selectedCategory);
+            localStorage.removeItem('selectedCategory'); // Vyčistit po načtení
+            // Aktualizuj total v HTML (pokud máš dynamický total)
+            document.getElementById('total-questions').textContent = this.questions.length;
+            document.getElementById('total-questions-result').textContent = this.questions.length;
+        } else {
+            this.questions = questions; // Celý test
+        }
+        
         this.currentQuestionIndex = 0;
         this.userAnswers = new Array(this.questions.length).fill(null);
         this.score = 0;
