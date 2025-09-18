@@ -3,63 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRIPO Quiz</title>
+    <title>PRIPO Quiz - Hlavní stránka</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>PRIPO - Test znalostí</h1>
-            <div class="progress-bar">
-                <div class="progress" id="progress"></div>
-            </div>
-            <div class="question-counter">
-                Otázka <span id="current-question">1</span> z <span id="total-questions">98</span>
-            </div>
+            <p>Vyberte si způsob, jak chcete test absolvovat.</p>
         </header>
 
         <main>
-            <div class="quiz-container" id="quiz-container">
-                <div class="question-section">
-                    <h2 id="question-title">Načítání otázky...</h2>
-                    <div class="question-category" id="question-category"></div>
-                </div>
-
-                <div class="answers-section" id="answers-section">
-                    <!-- Answers will be dynamically generated here -->
-                </div>
-
-                <div class="navigation">
-                    <button id="prev-btn" class="nav-btn" disabled>Předchozí</button>
-                    <button id="next-btn" class="nav-btn">Další</button>
-                    <button id="finish-btn" class="nav-btn finish-btn" style="display: none;">Dokončit test</button>
-                </div>
-            </div>
-
-            <div class="results-container" id="results-container" style="display: none;">
-                <h2>Výsledky testu</h2>
-                <div class="score-display">
-                    <div class="score-circle">
-                        <span id="final-score">0%</span>
-                    </div>
-                </div>
-                <div class="score-details">
-                    <p>Správných odpovědí: <span id="correct-answers">0</span> z <span id="total-answered">0</span></p>
-                    <p>Celkový počet otázek: <span id="total-questions-result">98</span></p>
-                </div>
-                <button id="restart-btn" class="nav-btn">Začít znovu</button>
-                <button id="review-btn" class="nav-btn">Zkontrolovat odpovědi</button>
-            </div>
-
-            <div class="review-container" id="review-container" style="display: none;">
-                <h2>Přehled odpovědí</h2>
-                <div id="review-content"></div>
-                <button id="back-to-results-btn" class="nav-btn">Zpět k výsledkům</button>
+            <div class="menu-container">
+                <a href="kategorie.html" class="menu-btn">Podle kategorií</a>
+                <a href="celytest.html" class="menu-btn">Celý test</a>
             </div>
         </main>
     </div>
-
-    <script src="questions.js"></script>
-    <script src="script.js"></script>
 </body>
 </html>
