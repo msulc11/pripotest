@@ -577,7 +577,7 @@ const questions = [
         category: "Mikroprocesory",
         question: "U von Neumannovy architektury přistupuje řídící jednotka procesoru do paměti pro data i pro instrukce jednotným způsobem.",
         type: "boolean",
-        correctAnswer: false
+        correctAnswer: true
     },
     {
         id: 53,
