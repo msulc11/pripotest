@@ -10,15 +10,61 @@
     <div class="container">
         <header>
             <h1>PRIPO - Test znalostí</h1>
-            <p>Vyberte kategorii, kterou chcete otestovat.</p>
+            <p id="header-text">Vyberte kategorii, kterou chcete otestovat.</p>
+            <div class="progress-bar" id="progress-bar" style="display: none;">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="question-counter" id="question-counter" style="display: none;">
+                Otázka <span id="current-question">1</span> z <span id="total-questions">0</span>
+            </div>
         </header>
 
         <main>
-            <div class="categories-container">
+            <div class="categories-container" id="categories-container">
                 <!-- Kategorie budou dynamicky generovány JavaScriptem -->
             </div>
-            
-            <div class="navigation">
+
+            <div class="quiz-container" id="quiz-container" style="display: none;">
+                <div class="question-section">
+                    <h2 id="question-title">Načítání otázky...</h2>
+                    <div class="question-category" id="question-category"></div>
+                </div>
+
+                <div class="answers-section" id="answers-section">
+                    <!-- Odpovědi budou dynamicky generovány zde -->
+                </div>
+
+                <div class="navigation">
+                    <button id="prev-btn" class="nav-btn" disabled>Předchozí</button>
+                    <button id="next-btn" class="nav-btn">Další</button>
+                    <button id="finish-btn" class="nav-btn finish-btn" style="display: none;">Dokončit test</button>
+                </div>
+            </div>
+
+            <div class="results-container" id="results-container" style="display: none;">
+                <h2>Výsledky testu</h2>
+                <div class="score-display">
+                    <div class="score-circle">
+                        <span id="final-score">0%</span>
+                    </div>
+                </div>
+                <div class="score-details">
+                    <p>Správných odpovědí: <span id="correct-answers">0</span> z <span id="total-answered">0</span></p>
+                    <p>Celkový počet otázek: <span id="total-questions-result">0</span></p>
+                </div>
+                <button id="restart-btn" class="nav-btn">Začít znovu</button>
+                <button id="review-btn" class="nav-btn">Zkontrolovat odpovědi</button>
+                <button id="back-to-categories-btn" class="nav-btn">Zpět na kategorie</button>
+            </div>
+
+            <div class="review-container" id="review-container" style="display: none;">
+                <h2>Přehled odpovědí</h2>
+                <div id="review-content"></div>
+                <button id="back-to-results-btn" class="nav-btn">Zpět k výsledkům</button>
+                <button id="back-to-categories-from-review-btn" class="nav-btn">Zpět na kategorie</button>
+            </div>
+
+            <div class="navigation" id="back-to-main-nav">
                 <a href="index.html" class="nav-btn">Zpět na hlavní stránku</a>
             </div>
         </main>
@@ -26,12 +72,20 @@
 
     <script src="questions.js"></script>
     <script>
-        class CategorySelector {
+        class CategoryQuizApp {
             constructor() {
                 this.questions = questions;
                 this.categories = this.getCategories();
+                this.currentMode = 'categories'; // categories, quiz, results, review
+                this.currentCategory = null;
+                this.filteredQuestions = [];
+                this.currentQuestionIndex = 0;
+                this.userAnswers = [];
+                this.score = 0;
+
                 this.initializeElements();
                 this.displayCategories();
+                this.bindCategoryEvents();
             }
 
             getCategories() {
@@ -46,10 +100,49 @@
             }
 
             initializeElements() {
-                this.categoriesContainer = document.querySelector('.categories-container');
+                // Containers
+                this.categoriesContainer = document.getElementById('categories-container');
+                this.quizContainer = document.getElementById('quiz-container');
+                this.resultsContainer = document.getElementById('results-container');
+                this.reviewContainer = document.getElementById('review-container');
+                this.backToMainNav = document.getElementById('back-to-main-nav');
+                this.headerText = document.getElementById('header-text');
+
+                // Question elements
+                this.questionTitle = document.getElementById('question-title');
+                this.questionCategory = document.getElementById('question-category');
+                this.answersSection = document.getElementById('answers-section');
+
+                // Progress elements
+                this.progressBar = document.getElementById('progress');
+                this.questionCounter = document.getElementById('question-counter');
+                this.currentQuestionSpan = document.getElementById('current-question');
+                this.totalQuestionsSpan = document.getElementById('total-questions');
+                this.totalQuestionsResultSpan = document.getElementById('total-questions-result');
+
+                // Navigation buttons
+                this.prevBtn = document.getElementById('prev-btn');
+                this.nextBtn = document.getElementById('next-btn');
+                this.finishBtn = document.getElementById('finish-btn');
+                this.restartBtn = document.getElementById('restart-btn');
+                this.reviewBtn = document.getElementById('review-btn');
+                this.backToResultsBtn = document.getElementById('back-to-results-btn');
+                this.backToCategoriesBtn = document.getElementById('back-to-categories-btn');
+                this.backToCategoriesFromReviewBtn = document.getElementById('back-to-categories-from-review-btn');
             }
 
             displayCategories() {
+                this.currentMode = 'categories';
+                this.categoriesContainer.style.display = 'block';
+                this.quizContainer.style.display = 'none';
+                this.resultsContainer.style.display = 'none';
+                this.reviewContainer.style.display = 'none';
+                this.backToMainNav.style.display = 'block';
+                this.progressBar.style.display = 'none';
+                this.questionCounter.style.display = 'none';
+                this.headerText.textContent = 'Vyberte kategorii, kterou chcete otestovat.';
+
+                this.categoriesContainer.innerHTML = '';
                 Object.entries(this.categories).forEach(([category, count]) => {
                     const categoryDiv = document.createElement('div');
                     categoryDiv.className = 'category-option';
@@ -60,32 +153,390 @@
                     `;
                     this.categoriesContainer.appendChild(categoryDiv);
                 });
+            }
 
-                // Bind events
+            bindCategoryEvents() {
                 this.categoriesContainer.addEventListener('click', (e) => {
                     if (e.target.classList.contains('start-category-btn')) {
-                        const category = e.target.dataset.category;
-                        this.startCategoryQuiz(category);
+                        this.currentCategory = e.target.dataset.category;
+                        this.startCategoryQuiz();
+                    }
+                });
+
+                this.prevBtn.addEventListener('click', () => this.previousQuestion());
+                this.nextBtn.addEventListener('click', () => this.nextQuestion());
+                this.finishBtn.addEventListener('click', () => this.finishQuiz());
+                this.restartBtn.addEventListener('click', () => this.restartQuiz());
+                this.reviewBtn.addEventListener('click', () => this.showReview());
+                this.backToResultsBtn.addEventListener('click', () => this.showResults());
+                this.backToCategoriesBtn.addEventListener('click', () => this.displayCategories());
+                this.backToCategoriesFromReviewBtn.addEventListener('click', () => this.displayCategories());
+
+                document.addEventListener('keydown', (e) => {
+                    if (this.currentMode === 'quiz' && this.quizContainer.style.display !== 'none') {
+                        switch(e.key) {
+                            case 'ArrowLeft':
+                                if (!this.prevBtn.disabled) this.previousQuestion();
+                                break;
+                            case 'ArrowRight':
+                                if (!this.nextBtn.disabled) this.nextQuestion();
+                                break;
+                            case '1':
+                            case '2':
+                            case '3':
+                            case '4':
+                                this.selectAnswerByNumber(parseInt(e.key));
+                                break;
+                        }
                     }
                 });
             }
 
-            startCategoryQuiz(category) {
-                // Uložit vybranou kategorii do localStorage
-                localStorage.setItem('selectedCategory', category);
-                // Přesměrovat na celý test (upravený pro kategorii)
-                window.location.href = 'celytest.html';
+            startCategoryQuiz() {
+                this.currentMode = 'quiz';
+                this.filteredQuestions = this.questions.filter(q => q.category === this.currentCategory);
+                this.currentQuestionIndex = 0;
+                this.userAnswers = new Array(this.filteredQuestions.length).fill(null);
+                this.score = 0;
+
+                this.shuffleQuestions();
+                this.categoriesContainer.style.display = 'none';
+                this.quizContainer.style.display = 'block';
+                this.resultsContainer.style.display = 'none';
+                this.reviewContainer.style.display = 'none';
+                this.backToMainNav.style.display = 'none';
+                this.progressBar.style.display = 'block';
+                this.questionCounter.style.display = 'block';
+                this.headerText.textContent = `Test: ${this.currentCategory}`;
+
+                this.totalQuestionsSpan.textContent = this.filteredQuestions.length;
+                this.totalQuestionsResultSpan.textContent = this.filteredQuestions.length;
+
+                this.displayQuestion();
+                this.updateProgress();
+                this.updateNavigationButtons();
+            }
+
+            shuffleQuestions() {
+                for (let i = this.filteredQuestions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [this.filteredQuestions[i], this.filteredQuestions[j]] = [this.filteredQuestions[j], this.filteredQuestions[i]];
+                }
+
+                this.filteredQuestions.forEach(question => {
+                    if (question.type === 'multiple' && question.options) {
+                        const shuffledOptions = [...question.options];
+                        for (let i = shuffledOptions.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+                        }
+                        question.options = shuffledOptions;
+                    }
+                });
+            }
+
+            displayQuestion() {
+                const question = this.filteredQuestions[this.currentQuestionIndex];
+                this.questionTitle.textContent = question.question;
+                this.questionCategory.textContent = question.category;
+                this.answersSection.innerHTML = '';
+                this.answersSection.className = 'answers-section';
+
+                if (question.type === 'multiple') {
+                    this.createMultipleChoiceAnswers(question);
+                } else if (question.type === 'boolean') {
+                    this.createBooleanAnswers(question);
+                }
+
+                const previousAnswer = this.userAnswers[this.currentQuestionIndex];
+                if (previousAnswer !== null) {
+                    const selectedOption = question.type === 'boolean' ?
+                        this.answersSection.querySelector(`[data-answer="${String(previousAnswer)}"]`) :
+                        this.answersSection.querySelector(`[data-answer="${previousAnswer}"]`);
+                    if (selectedOption) {
+                        selectedOption.classList.add('selected');
+                        const isCorrect = this.isAnswerCorrect(question, previousAnswer);
+                        this.answersSection.querySelectorAll('.answer-option').forEach(option => {
+                            const optionAnswer = option.dataset.answer;
+                            const isUserAnswer = question.type === 'boolean' ?
+                                optionAnswer === String(previousAnswer) :
+                                optionAnswer == previousAnswer;
+                            if (isUserAnswer) {
+                                option.classList.add(isCorrect ? 'correct' : 'incorrect');
+                            }
+                            const isCorrectAnswer = question.type === 'boolean' ?
+                                optionAnswer === String(question.correctAnswer) :
+                                optionAnswer == question.correctAnswer;
+                            if (!isCorrect && isCorrectAnswer) {
+                                option.classList.add('correct-answer');
+                            }
+                        });
+                    }
+                }
+            }
+
+            createMultipleChoiceAnswers(question) {
+                const labels = ['a', 'b', 'c', 'd'];
+                question.options.forEach((option, index) => {
+                    const answerDiv = document.createElement('div');
+                    answerDiv.className = 'answer-option';
+                    answerDiv.dataset.answer = option;
+                    answerDiv.innerHTML = `
+                        <div class="answer-label">${labels[index]}</div>
+                        <div class="answer-text">${option}</div>
+                    `;
+                    answerDiv.addEventListener('click', () => {
+                        this.selectAnswer(option);
+                    });
+                    this.answersSection.appendChild(answerDiv);
+                });
+            }
+
+            createBooleanAnswers(question) {
+                const booleanOptions = [
+                    { value: true, text: 'Pravda' },
+                    { value: false, text: 'Nepravda' }
+                ];
+                this.answersSection.className = 'answers-section true-false-options';
+                booleanOptions.forEach((option) => {
+                    const answerDiv = document.createElement('div');
+                    answerDiv.className = 'answer-option';
+                    answerDiv.dataset.answer = option.value;
+                    answerDiv.innerHTML = `
+                        <div class="answer-text">${option.text}</div>
+                    `;
+                    answerDiv.addEventListener('click', () => {
+                        this.selectAnswer(option.value);
+                    });
+                    this.answersSection.appendChild(answerDiv);
+                });
+            }
+
+            selectAnswer(answer) {
+                const question = this.filteredQuestions[this.currentQuestionIndex];
+                this.answersSection.querySelectorAll('.answer-option').forEach(option => {
+                    option.classList.remove('selected', 'correct', 'incorrect', 'correct-answer');
+                });
+
+                const selectedOption = question.type === 'boolean' ?
+                    this.answersSection.querySelector(`[data-answer="${String(answer)}"]`) :
+                    this.answersSection.querySelector(`[data-answer="${answer}"]`);
+                if (selectedOption) {
+                    selectedOption.classList.add('selected');
+                }
+
+                this.userAnswers[this.currentQuestionIndex] = answer;
+                const isCorrect = this.isAnswerCorrect(question, answer);
+
+                this.answersSection.querySelectorAll('.answer-option').forEach(option => {
+                    const optionAnswer = option.dataset.answer;
+                    const isUserAnswer = question.type === 'boolean' ?
+                        optionAnswer === String(answer) :
+                        optionAnswer == answer;
+                    if (isUserAnswer) {
+                        option.classList.add(isCorrect ? 'correct' : 'incorrect');
+                    }
+                    const isCorrectAnswer = question.type === 'boolean' ?
+                        optionAnswer === String(question.correctAnswer) :
+                        optionAnswer == question.correctAnswer;
+                    if (!isCorrect && isCorrectAnswer) {
+                        option.classList.add('correct-answer');
+                    }
+                });
+
+                this.updateNavigationButtons();
+            }
+
+            selectAnswerByNumber(number) {
+                const question = this.filteredQuestions[this.currentQuestionIndex];
+                if (question.type === 'multiple' && question.options && number <= question.options.length) {
+                    this.selectAnswer(question.options[number - 1]);
+                } else if (question.type === 'boolean') {
+                    if (number === 1) this.selectAnswer(true);
+                    else if (number === 2) this.selectAnswer(false);
+                }
+            }
+
+            updateNavigationButtons() {
+                this.prevBtn.disabled = this.currentQuestionIndex === 0;
+                const isLastQuestion = this.currentQuestionIndex === this.filteredQuestions.length - 1;
+                if (isLastQuestion) {
+                    this.nextBtn.style.display = 'none';
+                    this.finishBtn.style.display = 'inline-block';
+                    this.finishBtn.disabled = false;
+                } else {
+                    this.nextBtn.style.display = 'inline-block';
+                    this.finishBtn.style.display = 'none';
+                    this.nextBtn.disabled = false;
+                }
+            }
+
+            updateProgress() {
+                const progress = ((this.currentQuestionIndex + 1) / this.filteredQuestions.length) * 100;
+                this.progressBar.style.width = `${progress}%`;
+                this.currentQuestionSpan.textContent = this.currentQuestionIndex + 1;
+            }
+
+            previousQuestion() {
+                if (this.currentQuestionIndex > 0) {
+                    this.currentQuestionIndex--;
+                    this.displayQuestion();
+                    this.updateProgress();
+                    this.updateNavigationButtons();
+                }
+            }
+
+            nextQuestion() {
+                if (this.currentQuestionIndex < this.filteredQuestions.length - 1) {
+                    this.currentQuestionIndex++;
+                    this.displayQuestion();
+                    this.updateProgress();
+                    this.updateNavigationButtons();
+                }
+            }
+
+            finishQuiz() {
+                this.calculateScore();
+                this.showResults();
+            }
+
+            calculateScore() {
+                this.score = 0;
+                let totalAnswered = 0;
+                this.filteredQuestions.forEach((question, index) => {
+                    const userAnswer = this.userAnswers[index];
+                    if (userAnswer !== null) {
+                        totalAnswered++;
+                        if (question.type === 'boolean') {
+                            if (userAnswer === question.correctAnswer) {
+                                this.score++;
+                            }
+                        } else if (question.type === 'multiple') {
+                            if (userAnswer === question.correctAnswer) {
+                                this.score++;
+                            }
+                        }
+                    }
+                });
+                return { score: this.score, totalAnswered };
+            }
+
+            showResults() {
+                this.currentMode = 'results';
+                const { score, totalAnswered } = this.calculateScore();
+                const percentage = totalAnswered > 0 ? Math.round((score / totalAnswered) * 100) : 0;
+
+                this.quizContainer.style.display = 'none';
+                this.categoriesContainer.style.display = 'none';
+                this.reviewContainer.style.display = 'none';
+                this.resultsContainer.style.display = 'block';
+                this.backToMainNav.style.display = 'none';
+                this.progressBar.style.display = 'none';
+                this.questionCounter.style.display = 'none';
+                this.headerText.textContent = `Výsledky testu: ${this.currentCategory}`;
+
+                this.finalScore.textContent = `${percentage}%`;
+                this.correctAnswersSpan.textContent = score;
+                this.totalAnsweredSpan.textContent = totalAnswered;
+
+                const scoreCircle = document.querySelector('.score-circle');
+                scoreCircle.className = 'score-circle';
+                if (percentage >= 80) {
+                    scoreCircle.style.background = 'linear-gradient(135deg, #4caf50, #45a049)';
+                } else if (percentage >= 60) {
+                    scoreCircle.style.background = 'linear-gradient(135deg, #ff9800, #f57c00)';
+                } else {
+                    scoreCircle.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+                }
+            }
+
+            showReview() {
+                this.currentMode = 'review';
+                this.quizContainer.style.display = 'none';
+                this.categoriesContainer.style.display = 'none';
+                this.resultsContainer.style.display = 'none';
+                this.reviewContainer.style.display = 'block';
+                this.backToMainNav.style.display = 'none';
+                this.progressBar.style.display = 'none';
+                this.questionCounter.style.display = 'none';
+                this.headerText.textContent = `Přehled odpovědí: ${this.currentCategory}`;
+
+                this.generateReviewContent();
+            }
+
+            generateReviewContent() {
+                const reviewContent = document.getElementById('review-content');
+                reviewContent.innerHTML = '';
+
+                this.filteredQuestions.forEach((question, index) => {
+                    const userAnswer = this.userAnswers[index];
+                    const isCorrect = this.isAnswerCorrect(question, userAnswer);
+
+                    const questionDiv = document.createElement('div');
+                    questionDiv.className = `review-question ${!isCorrect ? 'incorrect' : ''}`;
+                    let reviewHTML = `
+                        <h4>${index + 1}. ${question.question}</h4>
+                        <div class="review-category">${question.category}</div>
+                    `;
+
+                    if (userAnswer !== null) {
+                        const userAnswerText = question.type === 'boolean' ?
+                            (userAnswer === true ? 'Pravda' : 'Nepravda') :
+                            userAnswer;
+                        reviewHTML += `
+                            <div class="review-answer ${isCorrect ? 'correct' : 'user-incorrect'}">
+                                Vaše odpověď: ${userAnswerText} ${isCorrect ? '✓' : '✗'}
+                            </div>
+                        `;
+                    } else {
+                        reviewHTML += `
+                            <div class="review-answer user-incorrect">
+                                Nezodpovězeno ✗
+                            </div>
+                        `;
+                    }
+
+                    if (!isCorrect) {
+                        const correctAnswerText = question.type === 'boolean' ?
+                            (question.correctAnswer === true ? 'Pravda' : 'Nepravda') :
+                            question.correctAnswer;
+                        reviewHTML += `
+                            <div class="review-answer correct">
+                                Správná odpověď: ${correctAnswerText} ✓
+                            </div>
+                        `;
+                    }
+
+                    questionDiv.innerHTML = reviewHTML;
+                    reviewContent.appendChild(questionDiv);
+                });
+            }
+
+            isAnswerCorrect(question, userAnswer) {
+                if (userAnswer === null) return false;
+                if (question.type === 'boolean') {
+                    return userAnswer === question.correctAnswer;
+                } else if (question.type === 'multiple') {
+                    return userAnswer === question.correctAnswer;
+                }
+                return false;
+            }
+
+            restartQuiz() {
+                this.currentQuestionIndex = 0;
+                this.userAnswers = new Array(this.filteredQuestions.length).fill(null);
+                this.score = 0;
+                this.shuffleQuestions();
+                this.startCategoryQuiz();
             }
         }
 
-        // Inicializace
         document.addEventListener('DOMContentLoaded', () => {
-            new CategorySelector();
+            new CategoryQuizApp();
         });
     </script>
 
     <style>
-        /* Přidání stylů pro kategorie (přidejte do style.css nebo sem pro rychlost) */
         .categories-container {
             display: flex;
             flex-direction: column;
