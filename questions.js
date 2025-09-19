@@ -216,7 +216,7 @@ const questions = [
         category: "Logické funkce",
         question: "Výrokem je např.věta \"Dva plus jedna je šest.\"",
         type: "boolean",
-        correctAnswer: false
+        correctAnswer: true
     },
     {
         id: 22,
