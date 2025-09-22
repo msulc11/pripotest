@@ -209,7 +209,7 @@ const questions = [
         category: "Logické funkce",
         question: "Výrokem je např. věta \"Špagety jsou jeho nejoblíbenější jídlo.\"",
         type: "boolean",
-        correctAnswer: true
+        correctAnswer: false
     },
     {
         id: 21,
